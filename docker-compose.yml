@@ -1,0 +1,38 @@
+﻿services:
+  cloudcraft-exporter:
+    image: python:3.12-slim
+    container_name: cloudcraft-exporter
+    command: ["python", "-u", "/app/exporter.py"]
+    ports:
+      - "127.0.0.1:9187:9187"
+    volumes:
+      - ./exporter.py:/app/exporter.py:ro
+      - ../metrics:/app/metrics:ro
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cloudcraft-prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - cloudcraft-exporter
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cloudcraft-grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
